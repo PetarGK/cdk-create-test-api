@@ -1,0 +1,651 @@
+Resources:
+  FroogleBackendStackPoolB6096481:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AutoVerifiedAttributes:
+        - email
+      LambdaConfig: {}
+      UsernameAttributes:
+        - email
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/FroogleBackendStackPool/Resource
+  WebUserPoolClient44F582D2:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: FroogleBackendStackPoolB6096481
+      ClientName: WebUserPoolClient
+      GenerateSecret: false
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/WebUserPoolClient/Resource
+  FroogleBackendStackIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId:
+            Ref: WebUserPoolClient44F582D2
+          ProviderName:
+            Fn::GetAtt:
+              - FroogleBackendStackPoolB6096481
+              - ProviderName
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/FroogleBackendStackIdentityPool
+  CognitoDefaultUnauthenticatedRoleABBF7267:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud:
+                  Ref: FroogleBackendStackIdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+            Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/CognitoDefaultUnauthenticatedRole/Resource
+  CognitoDefaultUnauthenticatedRoleDefaultPolicy2B700C08:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - mobileanalytics:PutEvents
+              - cognito-sync:*
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: CognitoDefaultUnauthenticatedRoleDefaultPolicy2B700C08
+      Roles:
+        - Ref: CognitoDefaultUnauthenticatedRoleABBF7267
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/CognitoDefaultUnauthenticatedRole/DefaultPolicy/Resource
+  CognitoDefaultAuthenticatedRoleC5D5C31E:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud:
+                  Ref: FroogleBackendStackIdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: authenticated
+            Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/CognitoDefaultAuthenticatedRole/Resource
+  CognitoDefaultAuthenticatedRoleDefaultPolicy4C5EB799:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - mobileanalytics:PutEvents
+              - cognito-sync:*
+              - cognito-identity:*
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: CognitoDefaultAuthenticatedRoleDefaultPolicy4C5EB799
+      Roles:
+        - Ref: CognitoDefaultAuthenticatedRoleC5D5C31E
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/CognitoDefaultAuthenticatedRole/DefaultPolicy/Resource
+  DefaultValid:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId:
+        Ref: FroogleBackendStackIdentityPool
+      Roles:
+        unauthenticated:
+          Fn::GetAtt:
+            - CognitoDefaultUnauthenticatedRoleABBF7267
+            - Arn
+        authenticated:
+          Fn::GetAtt:
+            - CognitoDefaultAuthenticatedRoleC5D5C31E
+            - Arn
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/DefaultValid
+  itemsApi28111E1C:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Items Service
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Resource
+  itemsApiDeploymentFEC31BD0c33d2c3b63f7bfe05596c353f03b2984:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: itemsApi28111E1C
+      Description: Automatically created by the RestApi construct
+    DependsOn:
+      - itemsApiv1itemsidGET24FCEB9F
+      - itemsApiv1itemsidAADF2C7C
+      - itemsApiv1itemsGET90253634
+      - itemsApiv1itemsD493BC6E
+      - itemsApiv10B9987A0
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Deployment/Resource
+  itemsApiDeploymentStageprodE77B897D:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: itemsApi28111E1C
+      DeploymentId:
+        Ref: itemsApiDeploymentFEC31BD0c33d2c3b63f7bfe05596c353f03b2984
+      StageName: prod
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/DeploymentStage.prod/Resource
+  itemsApiCloudWatchRoleB5C7B431:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/CloudWatchRole/Resource
+  itemsApiAccount591BF3E1:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn:
+        Fn::GetAtt:
+          - itemsApiCloudWatchRoleB5C7B431
+          - Arn
+    DependsOn:
+      - itemsApi28111E1C
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Account
+  itemsApiv10B9987A0:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - itemsApi28111E1C
+          - RootResourceId
+      PathPart: v1
+      RestApiId:
+        Ref: itemsApi28111E1C
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/Resource
+  itemsApiv1itemsD493BC6E:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Ref: itemsApiv10B9987A0
+      PathPart: items
+      RestApiId:
+        Ref: itemsApi28111E1C
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/Resource
+  itemsApiv1itemsGETApiPermissionwebApiFroogleBackendStackitemsApi34582E21GETv1items8EB9B7D1:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - getAllItemsFunction0B7A913E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: itemsApi28111E1C
+            - /
+            - Ref: itemsApiDeploymentStageprodE77B897D
+            - /GET/v1/items
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/GET/ApiPermission.webApiFroogleBackendStackitemsApi34582E21.GET..v1.items
+  itemsApiv1itemsGETApiPermissionTestwebApiFroogleBackendStackitemsApi34582E21GETv1itemsD6DC81BF:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - getAllItemsFunction0B7A913E
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: itemsApi28111E1C
+            - /test-invoke-stage/GET/v1/items
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/GET/ApiPermission.Test.webApiFroogleBackendStackitemsApi34582E21.GET..v1.items
+  itemsApiv1itemsGET90253634:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId:
+        Ref: itemsApiv1itemsD493BC6E
+      RestApiId:
+        Ref: itemsApi28111E1C
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - getAllItemsFunction0B7A913E
+                  - Arn
+              - /invocations
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/GET/Resource
+  itemsApiv1itemsidAADF2C7C:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Ref: itemsApiv1itemsD493BC6E
+      PathPart: "{id}"
+      RestApiId:
+        Ref: itemsApi28111E1C
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/{id}/Resource
+  itemsApiv1itemsidGETApiPermissionwebApiFroogleBackendStackitemsApi34582E21GETv1itemsidADC113AB:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - getOneItemFunctionE3257B22
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: itemsApi28111E1C
+            - /
+            - Ref: itemsApiDeploymentStageprodE77B897D
+            - /GET/v1/items/{id}
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/{id}/GET/ApiPermission.webApiFroogleBackendStackitemsApi34582E21.GET..v1.items.{id}
+  itemsApiv1itemsidGETApiPermissionTestwebApiFroogleBackendStackitemsApi34582E21GETv1itemsid1FD55FDC:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - getOneItemFunctionE3257B22
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: itemsApi28111E1C
+            - /test-invoke-stage/GET/v1/items/{id}
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/{id}/GET/ApiPermission.Test.webApiFroogleBackendStackitemsApi34582E21.GET..v1.items.{id}
+  itemsApiv1itemsidGET24FCEB9F:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId:
+        Ref: itemsApiv1itemsidAADF2C7C
+      RestApiId:
+        Ref: itemsApi28111E1C
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId:
+        Ref: FroogleBackendStack
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - getOneItemFunctionE3257B22
+                  - Arn
+              - /invocations
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/Default/v1/items/{id}/GET/Resource
+  itemsApiCustomDomainA6B1ADA9:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: webapi.petarkorudzhiev.com
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: arn:aws:acm:us-east-1:271522064567:certificate/c0bc9d4e-e6e5-4411-ba05-4f33d13d7fd1
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/CustomDomain/Resource
+  itemsApiCustomDomainMapwebApiFroogleBackendStackitemsApi34582E215B60C46E:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      DomainName:
+        Ref: itemsApiCustomDomainA6B1ADA9
+      RestApiId:
+        Ref: itemsApi28111E1C
+      Stage:
+        Ref: itemsApiDeploymentStageprodE77B897D
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/CustomDomain/Map:--=>webApiFroogleBackendStackitemsApi34582E21/Resource
+  itemsApiApiKeyE90818EF:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Enabled: true
+      StageKeys:
+        - RestApiId:
+            Ref: itemsApi28111E1C
+          StageName:
+            Ref: itemsApiDeploymentStageprodE77B897D
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/ApiKey/Resource
+  itemsApiUsagePlan0BAE913A:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId:
+            Ref: itemsApi28111E1C
+          Stage:
+            Ref: itemsApiDeploymentStageprodE77B897D
+          Throttle:
+            /v1/items/GET:
+              BurstLimit: 2
+              RateLimit: 10
+      Throttle:
+        BurstLimit: 2
+        RateLimit: 10
+      UsagePlanName: Easy
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/UsagePlan/Resource
+  itemsApiUsagePlanUsagePlanKeyResourceC15F7C47:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId:
+        Ref: itemsApiApiKeyE90818EF
+      KeyType: API_KEY
+      UsagePlanId:
+        Ref: itemsApiUsagePlan0BAE913A
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/itemsApi/UsagePlan/UsagePlanKeyResource
+  getOneItemFunctionServiceRoleCFD54796:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/getOneItemFunction/ServiceRole/Resource
+  getOneItemFunctionE3257B22:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: getOneItemFunctionCodeS3Bucket373AA1BE
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: getOneItemFunctionCodeS3VersionKey56A3E97C
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: getOneItemFunctionCodeS3VersionKey56A3E97C
+      Handler: main.handler
+      Role:
+        Fn::GetAtt:
+          - getOneItemFunctionServiceRoleCFD54796
+          - Arn
+      Runtime: nodejs8.10
+    DependsOn:
+      - getOneItemFunctionServiceRoleCFD54796
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/getOneItemFunction/Resource
+      aws:asset:path: /home/petark/sources/froogle-backend/dist/src/get-one
+      aws:asset:property: Code
+  FroogleBackendStack:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      RestApiId:
+        Ref: itemsApi28111E1C
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      Name: CognitoAuthorizer
+      ProviderARNs:
+        - Fn::GetAtt:
+            - FroogleBackendStackPoolB6096481
+            - Arn
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/FroogleBackendStack
+  getAllItemsFunctionServiceRoleCC084440:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/getAllItemsFunction/ServiceRole/Resource
+  getAllItemsFunctionServiceRoleDefaultPolicyF069C759:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: "*"
+            Effect: Allow
+            Resource: arn:aws:dynamodb:us-east-1:271522064567:table/offers
+        Version: "2012-10-17"
+      PolicyName: getAllItemsFunctionServiceRoleDefaultPolicyF069C759
+      Roles:
+        - Ref: getAllItemsFunctionServiceRoleCC084440
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/getAllItemsFunction/ServiceRole/DefaultPolicy/Resource
+  getAllItemsFunction0B7A913E:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: getAllItemsFunctionCodeS3Bucket1F957286
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: getAllItemsFunctionCodeS3VersionKey8E10DE15
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: getAllItemsFunctionCodeS3VersionKey8E10DE15
+      Handler: main.handler
+      Role:
+        Fn::GetAtt:
+          - getAllItemsFunctionServiceRoleCC084440
+          - Arn
+      Runtime: nodejs8.10
+    DependsOn:
+      - getAllItemsFunctionServiceRoleDefaultPolicyF069C759
+      - getAllItemsFunctionServiceRoleCC084440
+    Metadata:
+      aws:cdk:path: webApi/FroogleBackendStack/getAllItemsFunction/Resource
+      aws:asset:path: /home/petark/sources/froogle-backend/dist/src/get-all
+      aws:asset:property: Code
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Modules: aws-cdk=1.9.0,@aws-cdk/assets=1.9.0,@aws-cdk/aws-apigateway=1.9.0,@aws-cdk/aws-certificatemanager=1.9.0,@aws-cdk/aws-cloudformation=1.9.0,@aws-cdk/aws-cloudwatch=1.9.0,@aws-cdk/aws-cognito=1.9.0,@aws-cdk/aws-ec2=1.9.0,@aws-cdk/aws-events=1.9.0,@aws-cdk/aws-iam=1.9.0,@aws-cdk/aws-kms=1.9.0,@aws-cdk/aws-lambda=1.9.0,@aws-cdk/aws-s3=1.9.0,@aws-cdk/aws-s3-assets=1.9.0,@aws-cdk/aws-sqs=1.9.0,@aws-cdk/aws-ssm=1.9.0,@aws-cdk/core=1.9.0,@aws-cdk/cx-api=1.9.0,@aws-cdk/region-info=1.9.0,jsii-runtime=node.js/v10.16.0
+    Condition: CDKMetadataAvailable
+Outputs:
+  itemsApiEndpoint8392E274:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: itemsApi28111E1C
+          - .execute-api.
+          - Ref: AWS::Region
+          - "."
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: itemsApiDeploymentStageprodE77B897D
+          - /
+Parameters:
+  getOneItemFunctionCodeS3Bucket373AA1BE:
+    Type: String
+    Description: S3 bucket for asset "webApi/FroogleBackendStack/getOneItemFunction/Code"
+  getOneItemFunctionCodeS3VersionKey56A3E97C:
+    Type: String
+    Description: S3 key for asset version "webApi/FroogleBackendStack/getOneItemFunction/Code"
+  getOneItemFunctionCodeArtifactHashE0D2DE55:
+    Type: String
+    Description: Artifact hash for asset "webApi/FroogleBackendStack/getOneItemFunction/Code"
+  getAllItemsFunctionCodeS3Bucket1F957286:
+    Type: String
+    Description: S3 bucket for asset "webApi/FroogleBackendStack/getAllItemsFunction/Code"
+  getAllItemsFunctionCodeS3VersionKey8E10DE15:
+    Type: String
+    Description: S3 key for asset version "webApi/FroogleBackendStack/getAllItemsFunction/Code"
+  getAllItemsFunctionCodeArtifactHash646914DA:
+    Type: String
+    Description: Artifact hash for asset "webApi/FroogleBackendStack/getAllItemsFunction/Code"
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-2
+

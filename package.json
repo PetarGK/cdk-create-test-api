@@ -5,10 +5,12 @@
     "froogle-backend": "bin/froogle-backend.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -r dist && tsc && npm run build --prefix ./src/get-all && npm run build --prefix ./src/get-one",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy": "cdk deploy '*' --profile petark --region us-east-1",
+    "start-debug": "cdk synth webApiFroogleBackendStack6CEB52F6 --no-staging > template.yaml && sam local invoke -d 5858 getAllItemsFunction0B7A913E --no-event --region us-east-1 --profile petark"
   },
   "devDependencies": {
     "@aws-cdk/assert": "^1.9.0",
@@ -20,6 +22,11 @@
     "typescript": "~3.6.2"
   },
   "dependencies": {
+    "@aws-cdk/aws-apigateway": "^1.9.0",
+    "@aws-cdk/aws-certificatemanager": "^1.9.0",
+    "@aws-cdk/aws-cognito": "^1.9.0",
+    "@aws-cdk/aws-iam": "^1.9.0",
+    "@aws-cdk/aws-lambda": "^1.9.0",
     "@aws-cdk/core": "^1.9.0",
     "source-map-support": "^0.5.9"
   }

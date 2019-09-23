@@ -1,0 +1,29 @@
+{
+  "name": "get-all",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack-cli main.ts -c webpack.config.js -o ../../dist/src/get-all/main.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.6.0",
+    "@babel/preset-env": "^7.6.0",
+    "@types/aws-lambda": "^8.10.31",
+    "@types/node": "^12.7.5",
+    "aws-sdk": "^2.533.0",
+    "babel-loader": "^8.0.6",
+    "ts-loader": "^6.1.2",
+    "ts-node": "^8.1.0",
+    "typescript": "^3.6.3",
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.9",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "dependencies": {
+    "dynamodb-geo": "^0.4.0",
+    "source-map-support": "^0.5.9"
+  }
+}
